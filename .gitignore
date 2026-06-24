@@ -1,0 +1,13 @@
+node_modules/
+.env
+data/
+coverage/
+*.sqlite
+*.sqlite3
+*.db
+*.log
+npm-debug.log*
+.DS_Store
+.vscode/
+.agents/
+pynker_backend_task.pdf
