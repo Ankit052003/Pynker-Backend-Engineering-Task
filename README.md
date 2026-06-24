@@ -1,13 +1,43 @@
 # Pynker Backend Engineering Task
 
-REST API for user authentication and following users, built with Node.js, Express, SQLite, and JWT.
+A small REST API for user authentication and a follow system, built for the Pynker backend engineering assignment.
 
-## Requirements
+## Tech Stack
 
-- Node.js 18 or newer
-- npm
+- Node.js
+- Express
+- SQLite
+- JWT authentication
+- bcrypt password hashing
 
-## Setup
+## Assignment Coverage
+
+| Requirement | Status |
+| --- | --- |
+| `POST /api/auth/register` creates a user | Complete |
+| Passwords are hashed before storage | Complete |
+| Register returns a JWT | Complete |
+| `POST /api/auth/login` validates credentials | Complete |
+| Login returns a JWT on success | Complete |
+| `POST /api/users/:id/follow` requires auth | Complete |
+| Self-follow is rejected | Complete |
+| Duplicate follow is rejected | Complete |
+| `DELETE /api/users/:id/follow` unfollows a user | Complete |
+| `GET /api/users/:id/followers` is public | Complete |
+
+## Project Structure
+
+```text
+src/
+  app.js          Express app, routes, validation, auth middleware
+  config.js       Environment variable parsing
+  database.js     SQLite connection and schema setup
+  server.js       Server startup and shutdown handling
+scripts/
+  smoke-test.js   End-to-end API verification
+```
+
+## Quick Start
 
 ```bash
 npm install
@@ -15,7 +45,7 @@ cp .env.example .env
 npm start
 ```
 
-On Windows PowerShell:
+Windows PowerShell:
 
 ```powershell
 npm.cmd install
@@ -23,9 +53,9 @@ Copy-Item .env.example .env
 npm.cmd start
 ```
 
-Set a strong `JWT_SECRET` in `.env` before sharing or deploying the app.
+Before production use, replace `JWT_SECRET` in `.env` with a strong secret.
 
-## Verify The Assignment
+## Verify The Submission
 
 Run the smoke test:
 
@@ -33,7 +63,7 @@ Run the smoke test:
 npm test
 ```
 
-On Windows PowerShell:
+Windows PowerShell:
 
 ```powershell
 npm.cmd test
@@ -45,19 +75,9 @@ Expected output:
 Smoke test passed.
 ```
 
-If `npm start` says port `3000` is already in use, stop the other terminal running the server with `Ctrl+C` or change `PORT` in `.env`.
+The smoke test covers registration, login, authenticated follow, duplicate follow rejection, self-follow rejection, public follower listing, and authenticated unfollow.
 
-The smoke test verifies the required flow:
-
-- register returns a JWT and user
-- login returns a JWT
-- authenticated follow succeeds
-- following yourself fails
-- following twice fails
-- followers can be listed without auth
-- authenticated unfollow succeeds
-
-## API Endpoints
+## API Reference
 
 ### Register
 
@@ -66,11 +86,27 @@ POST /api/auth/register
 Content-Type: application/json
 ```
 
+Request:
+
 ```json
 {
   "name": "Alice",
   "email": "alice@example.com",
   "password": "password123"
+}
+```
+
+Response includes:
+
+```json
+{
+  "token": "<jwt>",
+  "user": {
+    "id": 1,
+    "name": "Alice",
+    "email": "alice@example.com",
+    "createdAt": "2026-06-25 00:00:00"
+  }
 }
 ```
 
@@ -81,12 +117,16 @@ POST /api/auth/login
 Content-Type: application/json
 ```
 
+Request:
+
 ```json
 {
   "email": "alice@example.com",
   "password": "password123"
 }
 ```
+
+Response includes a JWT and public user object.
 
 ### Follow User
 
@@ -95,11 +135,41 @@ POST /api/users/:id/follow
 Authorization: Bearer <jwt>
 ```
 
+Successful response:
+
+```json
+{
+  "message": "User followed.",
+  "followedUser": {
+    "id": 2,
+    "name": "Bob",
+    "email": "bob@example.com",
+    "createdAt": "2026-06-25 00:00:00"
+  }
+}
+```
+
+Handled errors include missing token, invalid token, missing target user, self-follow, and duplicate follow.
+
 ### Unfollow User
 
 ```http
 DELETE /api/users/:id/follow
 Authorization: Bearer <jwt>
+```
+
+Successful response:
+
+```json
+{
+  "message": "User unfollowed.",
+  "followedUser": {
+    "id": 2,
+    "name": "Bob",
+    "email": "bob@example.com",
+    "createdAt": "2026-06-25 00:00:00"
+  }
+}
 ```
 
 ### List Followers
@@ -108,7 +178,28 @@ Authorization: Bearer <jwt>
 GET /api/users/:id/followers
 ```
 
-No authentication is required for this endpoint.
+No authentication is required.
+
+Successful response:
+
+```json
+{
+  "user": {
+    "id": 2,
+    "name": "Bob",
+    "email": "bob@example.com",
+    "createdAt": "2026-06-25 00:00:00"
+  },
+  "followers": [
+    {
+      "id": 1,
+      "name": "Alice",
+      "email": "alice@example.com",
+      "createdAt": "2026-06-25 00:00:00"
+    }
+  ]
+}
+```
 
 ## Environment Variables
 
@@ -117,5 +208,13 @@ PORT=3000
 DATABASE_PATH=./data/pynker.sqlite
 JWT_SECRET=replace-this-with-a-long-random-secret
 ```
-# Author
-## Ankit Kumar
+
+## Troubleshooting
+
+If `npm start` reports that port `3000` is already in use, stop the other server terminal with `Ctrl+C` or set a different `PORT` in `.env`.
+
+If PowerShell blocks `npm`, use `npm.cmd` as shown in the Windows commands above.
+
+## Author
+
+Ankit Kumar
